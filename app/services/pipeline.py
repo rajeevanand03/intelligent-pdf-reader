@@ -3,6 +3,7 @@ import hashlib
 import json
 import logging
 import os
+import uuid
 
 import pymupdf as fitz
 
@@ -69,6 +70,7 @@ def process_session(config, store, sid, progress, check_cancel):
     os.makedirs(snap_dir, exist_ok=True)
     for f in os.listdir(snap_dir):
         os.remove(os.path.join(snap_dir, f))
+    run_tag = uuid.uuid4().hex[:8]  # unique snapshot names per run so browsers never show cached images
 
     total_pages = max(1, sum(d["pages"] for d in docs))
     done_pages = 0
@@ -164,7 +166,7 @@ def process_session(config, store, sid, progress, check_cancel):
                          f"Rendering snapshot {n + 1} of {len(results)}")
             for i, g in enumerate(r["regions"]):
                 g.update(render_region(open_docs[r["doc_id"]], g, config["SNAPSHOT_DPI"],
-                                       os.path.join(snap_dir, f"{r['id']}_{i}.png")))
+                                       os.path.join(snap_dir, f"{run_tag}_{r['id']}_{i}.png")))
     finally:
         for fd in open_docs.values():
             fd.close()

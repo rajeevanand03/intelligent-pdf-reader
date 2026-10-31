@@ -1,0 +1,11 @@
+.git
+.github
+.venv
+.hf_home
+.cache
+.pytest_cache
+__pycache__
+*.py[cod]
+instance
+tests/fixtures/generated
+samples/output

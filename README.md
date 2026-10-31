@@ -41,7 +41,20 @@ UNDERSTAND THE TOPIC -> IDENTIFY RELEVANT CONTENT -> EXTRACT ORIGINAL CONTENT ->
 - Tesseract OCR (`sudo apt-get install tesseract-ocr` / `brew install tesseract`)
 - Ghostscript is optional (only used by Camelot)
 
-## Installation
+## Run with Docker (recommended)
+
+Docker packages the OCR and table-extraction system dependencies, so this is the quickest way to run the full
+application locally:
+
+```bash
+docker build -t intelligent-pdf-reader .
+docker run --rm -p 8000:8000 -v "$(pwd)/data:/data" -e SECRET_KEY="replace-with-a-long-random-value" intelligent-pdf-reader
+```
+
+Open <http://127.0.0.1:8000>. The mounted `data/` directory preserves uploads, generated PDFs and the downloaded
+embedding model between runs.
+
+## Local installation
 
 ```bash
 python3 -m venv .venv
@@ -61,6 +74,15 @@ HOST=0.0.0.0 PORT=8000 python run.py
 
 For production use a WSGI server with a **single worker process** (jobs run in an in-process thread pool):
 `gunicorn -w 1 --threads 8 -b 0.0.0.0:8000 "app:create_app()"`.
+
+## Portfolio notes
+
+- This project demonstrates an end-to-end document-intelligence workflow: PDF validation, layout-aware extraction,
+  OCR, hybrid semantic/BM25/keyword retrieval, duplicate suppression, review controls and PDF generation.
+- The test suite uses generated documents to cover digital PDFs, image-only PDFs, password protection, tables,
+  API workflows and generated-output verification. GitHub Actions runs the full suite with Tesseract installed.
+- Processing stays local apart from the one-time download of the open-source embedding model; no document text is
+  sent to an LLM or external API.
 
 ### Configuration (environment variables)
 
@@ -127,7 +149,11 @@ duplicate detection, snapshots, metadata, upload validation and the generated PD
 
 - Relevance is computed with a small local embedding model; very domain-specific vocabularies benefit from a
   topic description, keywords or glossary entries.
+- The first semantic-search run downloads the embedding model (~90 MB); cache its data volume for subsequent offline
+  use.
 - Table detection relies on ruling lines or clear column alignment; borderless, irregular tables may be reconstructed
   with less structure (they are still snapshotted as an image region).
 - OCR quality depends on scan quality; low-confidence regions are flagged for review.
+- The included process manager is intentionally single-process. For multi-user production deployment, add persistent
+  job storage/queueing, authentication, per-user isolation and object storage before scaling out.
 - Question answering, summaries, classification and comparison are intentionally out of scope.

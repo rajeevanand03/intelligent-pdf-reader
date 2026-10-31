@@ -2,6 +2,7 @@
 __pycache__/
 *.pyc
 instance/
+data/
 .pytest_cache/
 tests/fixtures/generated/
 samples/output/

@@ -145,3 +145,16 @@ def test_keyword_only_search(client, fixtures):
     assert run_job(client, sid)["status"] == "done"
     res = client.get(f"/api/sessions/{sid}/results").get_json()["results"]
     assert res and any("root cause" in [k.lower() for k in r["matched_keywords"]] for r in res)
+
+
+def test_reprocessing_uses_fresh_snapshot_names(client, fixtures):
+    sid = client.post("/api/sessions").get_json()["id"]
+    upload(client, sid, os.path.join(fixtures, "annual_operations_review.pdf"))
+    client.put(f"/api/sessions/{sid}/interests", json={"topics": ["Operational Risk"], "keywords": []})
+    assert run_job(client, sid)["status"] == "done"
+    first = {g["file"] for r in client.get(f"/api/sessions/{sid}/results").get_json()["results"] for g in r["regions"]}
+    client.put(f"/api/sessions/{sid}/interests", json={"topics": ["Data Quality"], "keywords": []})
+    assert run_job(client, sid)["status"] == "done"
+    second = {g["file"] for r in client.get(f"/api/sessions/{sid}/results").get_json()["results"] for g in r["regions"]}
+    assert first and second and not first & second
+    assert client.get(f"/api/sessions/{sid}/snapshots/{next(iter(first))}").status_code == 404

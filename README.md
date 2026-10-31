@@ -80,7 +80,7 @@ For production use a WSGI server with a **single worker process** (jobs run in a
 - This project demonstrates an end-to-end document-intelligence workflow: PDF validation, layout-aware extraction,
   OCR, hybrid semantic/BM25/keyword retrieval, duplicate suppression, review controls and PDF generation.
 - The test suite uses generated documents to cover digital PDFs, image-only PDFs, password protection, tables,
-  API workflows and generated-output verification. GitHub Actions runs the full suite with Tesseract installed.
+  API workflows and generated-output verification. The included Docker image provides Tesseract for full OCR coverage.
 - Processing stays local apart from the one-time download of the open-source embedding model; no document text is
   sent to an LLM or external API.
 

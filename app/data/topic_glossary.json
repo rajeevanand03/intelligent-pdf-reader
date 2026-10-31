@@ -1,0 +1,22 @@
+{
+  "_comment": "Related concepts used to expand short topic names before semantic search. Edit freely; keys are matched case-insensitively and fuzzily.",
+  "operational risk": ["operational failures", "process breakdowns", "control weaknesses", "risk incidents", "loss events", "root cause analysis", "remediation measures", "internal control deficiencies", "operational resilience", "system outage", "IT failure and service disruption", "human error", "fraud and misconduct", "business continuity", "incident management", "change management failure", "third-party failure"],
+  "data quality": ["data accuracy", "data completeness", "data consistency", "data validation", "data governance", "data lineage", "missing values", "duplicate records", "data cleansing", "master data management", "data stewardship", "data integrity", "timeliness of data"],
+  "artificial intelligence": ["machine learning", "neural networks", "deep learning", "predictive models", "algorithms", "natural language processing", "generative AI", "large language models", "computer vision", "model training", "model risk", "automation with AI", "chatbots", "AI governance"],
+  "internal audit": ["audit findings", "audit plan", "assurance", "control testing", "audit committee", "third line of defence", "audit recommendations", "audit observations", "internal controls review", "management action plans"],
+  "regulatory compliance": ["regulations", "regulatory requirements", "compliance monitoring", "regulators", "legal obligations", "compliance breaches", "sanctions", "anti-money laundering", "know your customer", "regulatory reporting", "policy adherence", "fines and penalties"],
+  "process mining": ["event logs", "process discovery", "conformance checking", "process variants", "workflow analysis", "process bottlenecks", "throughput time", "process automation", "business process analysis", "process efficiency"],
+  "cybersecurity": ["information security", "cyber attack", "malware", "ransomware", "phishing", "data breach", "vulnerability management", "access control", "encryption", "security incident", "penetration testing", "identity and access management"],
+  "credit risk": ["default risk", "counterparty risk", "loan losses", "credit exposure", "probability of default", "expected credit loss", "collateral", "credit rating", "non-performing loans", "impairment"],
+  "market risk": ["interest rate risk", "foreign exchange risk", "price volatility", "value at risk", "trading losses", "hedging", "equity price risk", "commodity price risk"],
+  "liquidity risk": ["funding risk", "cash flow shortfall", "liquidity coverage", "liquidity buffer", "deposit outflows", "funding stress", "working capital"],
+  "fraud": ["fraudulent transactions", "financial crime", "misappropriation", "embezzlement", "fraud detection", "suspicious activity", "identity theft", "bribery and corruption"],
+  "governance": ["board oversight", "corporate governance", "accountability", "roles and responsibilities", "committees", "policies and procedures", "decision rights", "risk appetite"],
+  "sustainability": ["environmental impact", "climate change", "carbon emissions", "ESG", "renewable energy", "social responsibility", "net zero", "waste reduction"],
+  "data privacy": ["personal data", "data protection", "GDPR", "consent", "privacy breach", "data subject rights", "confidentiality", "anonymisation"],
+  "third party risk": ["vendor management", "supplier risk", "outsourcing", "service provider failure", "due diligence on vendors", "contract management", "supply chain disruption"],
+  "business continuity": ["disaster recovery", "crisis management", "service restoration", "recovery time objective", "contingency planning", "operational resilience", "backup sites", "continuity testing"],
+  "model risk": ["model validation", "model performance", "model assumptions", "model governance", "model errors", "backtesting", "model inventory"],
+  "human resources": ["employees", "recruitment", "staff turnover", "training and development", "compensation", "workforce planning", "employee engagement", "talent management"],
+  "customer experience": ["customer satisfaction", "complaints", "net promoter score", "customer journey", "service quality", "customer feedback"]
+}

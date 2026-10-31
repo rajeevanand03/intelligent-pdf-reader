@@ -1,0 +1,234 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Intelligent PDF Reader</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='vendor/bootstrap.min.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='vendor/bootstrap-icons.min.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/app.css') }}">
+</head>
+<body data-max-mb="{{ max_mb }}" data-max-files="{{ max_files }}">
+<nav class="navbar navbar-dark app-navbar px-3">
+  <span class="navbar-brand fw-semibold"><i class="bi bi-journal-text me-2"></i>Intelligent PDF Reader</span>
+  <div class="d-flex align-items-center gap-3">
+    <span class="text-white-50 small d-none d-md-inline">Extracts original content &mdash; never rewrites it</span>
+    <button class="btn btn-sm btn-outline-light" id="btn-new-session"><i class="bi bi-plus-lg me-1"></i>New session</button>
+  </div>
+</nav>
+
+<div class="container-fluid app-shell">
+  <div class="row g-0">
+    <aside class="col-lg-2 col-md-3 sidebar py-4">
+      <ol class="stepper list-unstyled mb-0" id="stepper">
+        <li data-step="upload"><span class="num">1</span><div><div class="t">Upload</div><div class="s" id="sum-upload">No documents</div></div></li>
+        <li data-step="interests"><span class="num">2</span><div><div class="t">Interests</div><div class="s" id="sum-interests">No topics</div></div></li>
+        <li data-step="settings"><span class="num">3</span><div><div class="t">Settings</div><div class="s" id="sum-settings">Strict</div></div></li>
+        <li data-step="process"><span class="num">4</span><div><div class="t">Process</div><div class="s" id="sum-process">Not started</div></div></li>
+        <li data-step="review"><span class="num">5</span><div><div class="t">Review</div><div class="s" id="sum-review">&mdash;</div></div></li>
+        <li data-step="generate"><span class="num">6</span><div><div class="t">Generate PDF</div><div class="s" id="sum-generate">&mdash;</div></div></li>
+      </ol>
+    </aside>
+
+    <main class="col-lg-10 col-md-9 p-4">
+      <div id="alerts"></div>
+
+      <!-- 1. Upload -->
+      <section class="step-pane" id="pane-upload">
+        <h4 class="mb-1">Upload documents</h4>
+        <p class="text-secondary">Add one or more PDFs (text-based or scanned). Up to {{ max_files }} files, {{ max_mb }} MB each.</p>
+        <div class="dropzone" id="dropzone" tabindex="0">
+          <i class="bi bi-cloud-arrow-up display-5 text-primary"></i>
+          <div class="fw-semibold mt-2">Drag &amp; drop PDF files here</div>
+          <div class="text-secondary small">or click to browse</div>
+          <input type="file" id="file-input" accept="application/pdf,.pdf" multiple hidden>
+        </div>
+        <div class="card mt-4">
+          <div class="card-header bg-white d-flex justify-content-between align-items-center">
+            <span class="fw-semibold">Documents</span><span class="small text-secondary" id="doc-totals"></span>
+          </div>
+          <div class="table-responsive">
+            <table class="table align-middle mb-0" id="doc-table">
+              <thead class="table-light"><tr><th>File</th><th>Size</th><th>Pages</th><th style="width:30%">Status</th><th class="text-end">Actions</th></tr></thead>
+              <tbody><tr class="empty"><td colspan="5" class="text-center text-secondary py-4">No documents uploaded yet.</td></tr></tbody>
+            </table>
+          </div>
+        </div>
+        <div class="d-flex justify-content-end mt-4"><button class="btn btn-primary" data-goto="interests">Next: Interests <i class="bi bi-arrow-right"></i></button></div>
+      </section>
+
+      <!-- 2. Interests -->
+      <section class="step-pane d-none" id="pane-interests">
+        <h4 class="mb-1">Define your interests</h4>
+        <p class="text-secondary">Topics drive the search. Keywords are optional and only <em>add</em> to topic-based retrieval &mdash; content without your exact words is still found.</p>
+        <div class="row g-4">
+          <div class="col-xl-6">
+            <div class="card h-100"><div class="card-body">
+              <label class="form-label fw-semibold" for="topic-input">Topics</label>
+              <div class="input-group">
+                <input class="form-control" id="topic-input" placeholder="e.g. Operational Risk, Data Quality" maxlength="120">
+                <button class="btn btn-outline-primary" id="btn-add-topic"><i class="bi bi-plus-lg"></i> Add</button>
+              </div>
+              <div class="form-text">Press Enter or use commas to add several.</div>
+              <div class="tag-list mt-2" id="topic-tags"></div>
+              <label class="form-label fw-semibold mt-4" for="description">Topic description <span class="text-secondary fw-normal">(optional)</span></label>
+              <textarea class="form-control" id="description" rows="4" maxlength="4000" placeholder="Describe in your own words what you are looking for, e.g. 'Find discussions about control weaknesses, process failures, incidents, risk mitigation and recommendations.'"></textarea>
+            </div></div>
+          </div>
+          <div class="col-xl-6">
+            <div class="card h-100"><div class="card-body">
+              <label class="form-label fw-semibold" for="keyword-input">Keywords <span class="text-secondary fw-normal">(optional)</span></label>
+              <div class="input-group">
+                <input class="form-control" id="keyword-input" placeholder="internal control, incident, root cause">
+                <button class="btn btn-outline-primary" id="btn-add-keyword"><i class="bi bi-plus-lg"></i> Add</button>
+              </div>
+              <div class="d-flex align-items-center gap-2 mt-3 flex-wrap">
+                <label class="btn btn-sm btn-outline-secondary mb-0"><i class="bi bi-file-earmark-spreadsheet me-1"></i>Import keyword file
+                  <input type="file" id="keyword-file" accept=".txt,.csv,.xlsx" hidden></label>
+                <span class="small text-secondary">.xlsx, .csv or .txt &middot; samples:
+                  <a href="{{ url_for('static', filename='samples/sample_keywords.csv') }}" download>csv</a>,
+                  <a href="{{ url_for('static', filename='samples/sample_keywords.xlsx') }}" download>xlsx</a>,
+                  <a href="{{ url_for('static', filename='samples/sample_keywords.txt') }}" download>txt</a></span>
+                <button class="btn btn-sm btn-link text-danger ms-auto" id="btn-clear-keywords">Clear all</button>
+              </div>
+              <div class="tag-list mt-3" id="keyword-tags"></div>
+            </div></div>
+          </div>
+        </div>
+        <div class="d-flex justify-content-between mt-4">
+          <button class="btn btn-outline-secondary" data-goto="upload"><i class="bi bi-arrow-left"></i> Back</button>
+          <button class="btn btn-primary" data-goto="settings">Next: Settings <i class="bi bi-arrow-right"></i></button>
+        </div>
+      </section>
+
+      <!-- 3. Settings -->
+      <section class="step-pane d-none" id="pane-settings">
+        <h4 class="mb-1">Search settings</h4>
+        <p class="text-secondary">Control how broadly the reader searches and what kinds of content it extracts.</p>
+        <div class="row g-4">
+          <div class="col-xl-6"><div class="card h-100"><div class="card-body">
+            <div class="fw-semibold mb-2">Search mode</div>
+            <div class="mode-options">
+              <label class="mode-card"><input type="radio" name="mode" value="strict" checked>
+                <div><div class="fw-semibold">Strict</div><div class="small text-secondary">Only highly relevant content (HIGH and MEDIUM).</div></div></label>
+              <label class="mode-card"><input type="radio" name="mode" value="exploratory">
+                <div><div class="fw-semibold">Exploratory</div><div class="small text-secondary">Also related concepts and broader discussions (adds LOW).</div></div></label>
+            </div>
+            <div class="fw-semibold mt-4 mb-2">Pre-select relevance levels for the output</div>
+            <div class="d-flex gap-3">
+              <div class="form-check"><input class="form-check-input lvl" type="checkbox" value="HIGH" id="lvl-high"><label class="form-check-label" for="lvl-high"><span class="badge lv-HIGH">HIGH</span></label></div>
+              <div class="form-check"><input class="form-check-input lvl" type="checkbox" value="MEDIUM" id="lvl-med"><label class="form-check-label" for="lvl-med"><span class="badge lv-MEDIUM">MEDIUM</span></label></div>
+              <div class="form-check"><input class="form-check-input lvl" type="checkbox" value="LOW" id="lvl-low"><label class="form-check-label" for="lvl-low"><span class="badge lv-LOW">LOW</span></label></div>
+            </div>
+            <div class="form-text">You can still include or exclude every individual result during review.</div>
+            <div class="fw-semibold mt-4 mb-1">Relevance threshold</div>
+            <div class="form-check form-switch"><input class="form-check-input" type="checkbox" id="auto-threshold" checked><label class="form-check-label" for="auto-threshold">Automatic (adapts to each document)</label></div>
+            <div id="threshold-box" class="d-none mt-2">
+              <label class="form-label small mb-0" for="medium-threshold">MEDIUM threshold: <span id="medium-threshold-val">0.36</span></label>
+              <input type="range" class="form-range" id="medium-threshold" min="0.15" max="0.8" step="0.01" value="0.36">
+              <div class="form-text">HIGH is set 0.10 above, LOW 0.07 below. Lower = more results.</div>
+            </div>
+          </div></div></div>
+          <div class="col-xl-6"><div class="card h-100"><div class="card-body">
+            <div class="fw-semibold mb-2">Matching &amp; extraction</div>
+            <div class="form-check form-switch mb-2"><input class="form-check-input opt" type="checkbox" id="opt-semantic" data-key="semantic" checked><label class="form-check-label" for="opt-semantic">Semantic search <span class="small text-secondary">(meaning-based, local MiniLM model)</span></label></div>
+            <div class="form-check form-switch mb-2"><input class="form-check-input opt" type="checkbox" id="opt-keyword" data-key="keyword" checked><label class="form-check-label" for="opt-keyword">Keyword search <span class="small text-secondary">(exact, partial and BM25)</span></label></div>
+            <div class="form-check form-switch mb-2"><input class="form-check-input opt" type="checkbox" id="opt-context" data-key="supporting_context" checked><label class="form-check-label" for="opt-context">Include supporting context <span class="small text-secondary">(continuing paragraphs, examples, conclusions)</span></label></div>
+            <div class="form-check form-switch mb-2"><input class="form-check-input opt" type="checkbox" id="opt-paragraphs" data-key="paragraphs" checked><label class="form-check-label" for="opt-paragraphs">Extract discussions &amp; paragraphs</label></div>
+            <div class="form-check form-switch mb-2"><input class="form-check-input opt" type="checkbox" id="opt-tables" data-key="tables" checked><label class="form-check-label" for="opt-tables">Extract complete tables</label></div>
+            <div class="form-check form-switch mb-2"><input class="form-check-input opt" type="checkbox" id="opt-ocr" data-key="ocr" checked><label class="form-check-label" for="opt-ocr">OCR for scanned pages <span class="small text-secondary">(Tesseract)</span></label></div>
+          </div></div></div>
+        </div>
+        <div class="d-flex justify-content-between mt-4">
+          <button class="btn btn-outline-secondary" data-goto="interests"><i class="bi bi-arrow-left"></i> Back</button>
+          <button class="btn btn-primary" data-goto="process">Next: Process <i class="bi bi-arrow-right"></i></button>
+        </div>
+      </section>
+
+      <!-- 4. Process -->
+      <section class="step-pane d-none" id="pane-process">
+        <h4 class="mb-1">Process documents</h4>
+        <p class="text-secondary">The reader analyses each page, runs OCR where needed, finds relevant discussions and tables, and captures original snapshots.</p>
+        <div class="row g-4">
+          <div class="col-xl-5"><div class="card"><div class="card-body" id="process-summary"></div></div></div>
+          <div class="col-xl-7"><div class="card"><div class="card-body">
+            <div class="d-flex justify-content-between align-items-center mb-2">
+              <div><div class="fw-semibold" id="job-stage">Ready</div><div class="small text-secondary" id="job-message">Press start to begin.</div></div>
+              <div class="d-flex gap-2">
+                <button class="btn btn-danger d-none" id="btn-cancel"><i class="bi bi-stop-circle me-1"></i>Cancel</button>
+                <button class="btn btn-primary" id="btn-process"><i class="bi bi-play-fill me-1"></i>Start processing</button>
+              </div>
+            </div>
+            <div class="progress" style="height: 14px"><div class="progress-bar progress-bar-striped" id="job-bar" style="width:0%">0%</div></div>
+            <div class="job-log mt-3" id="job-log"></div>
+          </div></div>
+          <div class="card mt-3 d-none" id="doc-reports"><div class="card-body"></div></div></div>
+        </div>
+        <div class="d-flex justify-content-between mt-4">
+          <button class="btn btn-outline-secondary" data-goto="settings"><i class="bi bi-arrow-left"></i> Back</button>
+          <button class="btn btn-primary" data-goto="review" id="btn-to-review" disabled>Review results <i class="bi bi-arrow-right"></i></button>
+        </div>
+      </section>
+
+      <!-- 5. Review -->
+      <section class="step-pane d-none" id="pane-review">
+        <div class="d-flex justify-content-between align-items-start flex-wrap gap-2">
+          <div><h4 class="mb-1">Review extracted content</h4>
+            <p class="text-secondary mb-2">Original snapshots grouped by topic. Include or exclude each item before generating the PDF.</p></div>
+          <div class="review-stats" id="review-stats"></div>
+        </div>
+        <div class="card mb-3"><div class="card-body py-2 d-flex flex-wrap gap-3 align-items-center">
+          <select class="form-select form-select-sm w-auto" id="f-topic"><option value="">All topics</option></select>
+          <div class="d-flex gap-2 small">
+            <label><input type="checkbox" class="f-level" value="HIGH" checked> HIGH</label>
+            <label><input type="checkbox" class="f-level" value="MEDIUM" checked> MEDIUM</label>
+            <label><input type="checkbox" class="f-level" value="LOW" checked> LOW</label>
+          </div>
+          <select class="form-select form-select-sm w-auto" id="f-kind"><option value="">All types</option><option value="section">Discussions</option><option value="table">Tables</option></select>
+          <select class="form-select form-select-sm w-auto" id="f-status"><option value="">Included &amp; excluded</option><option value="in">Included only</option><option value="out">Excluded only</option></select>
+          <input class="form-control form-control-sm w-auto" id="f-search" placeholder="Search text">
+          <div class="ms-auto d-flex gap-2">
+            <button class="btn btn-sm btn-outline-success" id="btn-include-visible">Include shown</button>
+            <button class="btn btn-sm btn-outline-danger" id="btn-exclude-visible">Exclude shown</button>
+          </div>
+        </div></div>
+        <div id="results"></div>
+        <div class="d-flex justify-content-between mt-4">
+          <button class="btn btn-outline-secondary" data-goto="process"><i class="bi bi-arrow-left"></i> Back</button>
+          <button class="btn btn-primary" data-goto="generate">Next: Generate PDF <i class="bi bi-arrow-right"></i></button>
+        </div>
+      </section>
+
+      <!-- 6. Generate -->
+      <section class="step-pane d-none" id="pane-generate">
+        <h4 class="mb-1">Generate focused PDF</h4>
+        <p class="text-secondary">Creates a consolidated PDF with a cover page, content organised by topic, and source/page references for every extract.</p>
+        <div class="row g-4">
+          <div class="col-xl-4"><div class="card"><div class="card-body">
+            <label class="form-label fw-semibold" for="out-title">Document title</label>
+            <input class="form-control" id="out-title" maxlength="120" value="Topic-Focused Extract">
+            <div class="mt-3" id="generate-summary"></div>
+            <button class="btn btn-primary w-100 mt-3" id="btn-generate"><i class="bi bi-file-earmark-pdf me-1"></i>Generate PDF</button>
+            <a class="btn btn-success w-100 mt-2 d-none" id="btn-download"><i class="bi bi-download me-1"></i>Download PDF</a>
+            <div class="small text-secondary mt-2" id="generate-info"></div>
+          </div></div></div>
+          <div class="col-xl-8"><div class="card"><div class="card-body p-0">
+            <div class="pdf-placeholder" id="pdf-placeholder"><i class="bi bi-file-earmark-pdf display-4"></i><div>The preview appears here after generation.</div></div>
+            <iframe id="pdf-preview" class="d-none" title="Generated PDF preview"></iframe>
+          </div></div></div>
+        </div>
+        <div class="d-flex justify-content-start mt-4"><button class="btn btn-outline-secondary" data-goto="review"><i class="bi bi-arrow-left"></i> Back to review</button></div>
+      </section>
+    </main>
+  </div>
+</div>
+
+<div class="modal fade" id="snap-modal" tabindex="-1"><div class="modal-dialog modal-xl modal-dialog-scrollable"><div class="modal-content">
+  <div class="modal-header"><h6 class="modal-title" id="snap-modal-title"></h6><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+  <div class="modal-body text-center bg-light" id="snap-modal-body"></div>
+</div></div></div>
+
+<script src="{{ url_for('static', filename='vendor/bootstrap.bundle.min.js') }}"></script>
+<script src="{{ url_for('static', filename='js/app.js') }}"></script>
+</body>
+</html>
